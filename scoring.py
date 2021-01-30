@@ -1,10 +1,16 @@
 import datetime
 import pandas as pd
 
+import os
 from os import path
 
 CSV_DIR = 'csv'
 IMAGE_DIR = 'images'
+
+for directory in [CSV_DIR, IMAGE_DIR]:
+    if not path.isdir(directory):
+        os.makedirs(directory)
+
 
 class Board:
     
@@ -26,9 +32,17 @@ class Board:
         
     def add_score(self, name, score):
         today = pd.to_datetime(datetime.date.today())
+        name = str(name)
+        
+        # Insert row if not exist
         if today not in self.df.index:
             self.df.loc[today] = 0
-        self.df.loc[today][name] += score
+        
+        # Insert column if not exist
+        if name not in self.df.columns:
+            self.add_member(name)
+        
+        self.df.loc[today, name] += score
     
     def get_timeline(self):
         figure = self.df.plot(figsize=(15, 6)).get_figure()
@@ -38,7 +52,8 @@ class Board:
     def clear(self):
         self.df = pd.DataFrame()
         
-    def get_summary_pic(self):
-        figure = self.df.sum().plot.barh(figsize=(15, 6)).get_figure()
+    def get_summary_pic(self, user_map):
+        df = self.df.rename(columns=user_map)
+        figure = df.sum().plot.barh(figsize=(15, 6)).get_figure()
         figure.savefig(self.image_path)
         return self.image_path
